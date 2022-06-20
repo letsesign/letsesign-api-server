@@ -1,0 +1,39 @@
+{
+  "name": "letsesign-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Let's eSign PBC",
+  "license": "MIT",
+  "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
+    "asn1js": "^3.0.5",
+    "aws-sdk": "^2.1105.0",
+    "cbor": "^8.1.0",
+    "cors": "^2.8.5",
+    "csvtojson": "^2.0.10",
+    "express": "^4.18.1",
+    "express-openid-connect": "^2.7.2",
+    "js-base64": "^3.7.2",
+    "jsonschema": "^1.4.1",
+    "libphonenumber-js": "^1.10.6",
+    "lodash": "^4.17.21",
+    "node-fetch": "^2.6.7",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^2.14.305",
+    "pkijs": "^3.0.5"
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "^7.18.2",
+    "@babel/preset-env": "^7.18.2",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jsx-a11y": "^6.5.1",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-react": "^7.30.0"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "authRequired": false,
+  "auth0Logout": false,
+  "secret": "YOUR_SECRET",
+  "baseURL": "http://localhost",
+  "clientID": "YOUR_CLIENT_ID",
+  "issuerBaseURL": "https://localhost.us.auth0.com"
+}
