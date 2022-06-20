@@ -13,7 +13,7 @@ When deployed at your site, Let's eSign API Server will encrypt your users' docu
 
 ## How to deploy
 
-**To deploy Let's eSign Sender, you need to [register your root domain with Let's eSign](https://github.com/letsesign/letsesign-docs/blob/main/HOWTO-register.md) first in order to get the required API key.**
+**To deploy Let's eSign API Server, you need to [register your root domain with Let's eSign](https://github.com/letsesign/letsesign-docs/blob/main/HOWTO-register.md) first in order to get the required API key.**
 
 Depending on your choice there are two ways to deploy Let's eSign API Server:
 
