@@ -70,65 +70,76 @@ app.post('/submit-task/', async (req, res) => {
     const { payload } = req.body;
     const caller = new Caller();
     const byteBuffer = Buffer.from(payload.templateData, 'base64');
-    if (payload.taskConfig.options.isBulk === true) {
-      const list = payload.taskConfig.signerInfoList;
-      let csvText = 'Name,Email,Phone Number\n';
-      for (let i = 0; i < list.length; i += 1) {
-        csvText += `${list[i].name},${list[i].emailAddr},${list[i].phoneNumber}`;
-        csvText += i !== list.length - 1 ? '\n' : '';
-      }
-      const bulkTaskConfig = {
-        senderMsg: payload.taskConfig.options.senderMsg,
-        notificantEmail: payload.taskConfig.options.notificantEmail,
-        notificantLocale: payload.taskConfig.options.notificantLocale
-      };
-      // Dry Run
-      result = await caller.submitBulkTask(
-        apiKey,
-        bearerSecret,
-        kmsPubKey,
-        bulkTaskConfig,
-        payload.templateInfo,
-        byteBuffer,
-        csvText,
-        true
-      );
-      if (result.retCode === 0) {
-        res.status(200).send(result);
-      } else {
-        console.log(result);
-        res.status(200).send({ error: `SDK Error: ${result.retCode}` });
-        return;
-      }
-      // Live Run
-      result = await caller.submitBulkTask(
-        apiKey,
-        bearerSecret,
-        kmsPubKey,
-        bulkTaskConfig,
-        payload.templateInfo,
-        byteBuffer,
-        csvText,
-        false
-      );
-      if (result.retCode !== 0) {
-        console.log(result);
-      }
+    result = await caller.submitTask(
+      apiKey,
+      bearerSecret,
+      kmsPubKey,
+      payload.taskConfig,
+      payload.templateInfo,
+      byteBuffer
+    );
+    if (result.retCode === 0) {
+      res.status(200).send(result);
     } else {
-      result = await caller.submitTask(
-        apiKey,
-        bearerSecret,
-        kmsPubKey,
-        payload.taskConfig,
-        payload.templateInfo,
-        byteBuffer
-      );
-      if (result.retCode === 0) {
-        res.status(200).send(result);
-      } else {
-        console.log(result);
-        res.status(200).send({ error: `SDK Error: ${result.retCode}` });
-      }
+      console.log(result);
+      res.status(200).send({ error: `SDK Error: ${result.retCode}` });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(200).send({ error: 'Backend Error' });
+  }
+});
+
+app.post('/submit-bulk-task/', async (req, res) => {
+  if (!req.oidc.isAuthenticated() && config.authRequired === true) {
+    res.status(200).send({ error: 'Not Login' });
+  }
+  if (!apiKey) {
+    console.log('Invalid API Key');
+    res.status(200).send({ error: 'Invalid API Key' });
+    return;
+  }
+  const rootDomain = apiKey.substring(apiKey.indexOf('@') + 1);
+  if (!req.body.payload.bulkTaskConfig.notificantEmail.includes(rootDomain)) {
+    console.log('Invalid Email Address');
+    res.status(200).send({ error: 'Invalid Email Address' });
+    return;
+  }
+  try {
+    const { payload } = req.body;
+    const caller = new Caller();
+    const byteBuffer = Buffer.from(payload.templateData, 'base64');
+    // Dry Run
+    result = await caller.submitBulkTask(
+      apiKey,
+      bearerSecret,
+      kmsPubKey,
+      payload.bulkTaskConfig,
+      payload.templateInfo,
+      byteBuffer,
+      payload.csvSignerInfoList,
+      true
+    );
+    if (result.retCode === 0) {
+      res.status(200).send(result);
+    } else {
+      console.log(result);
+      res.status(200).send({ error: `SDK Error: ${result.retCode}` });
+      return;
+    }
+    // Live Run
+    result = await caller.submitBulkTask(
+      apiKey,
+      bearerSecret,
+      kmsPubKey,
+      payload.bulkTaskConfig,
+      payload.templateInfo,
+      byteBuffer,
+      payload.csvSignerInfoList,
+      false
+    );
+    if (result.retCode !== 0) {
+      console.log(result);
     }
   } catch (err) {
     console.log(err);
@@ -141,9 +152,14 @@ app.post('/verify-pdf/', async (req, res) => {
     res.status(200).send({ error: 'Not login' });
   }
   try {
-    const { pdfBufferB64, spfDataB64 } = req.body;
+    const { bindingDataHash, pdfBufferB64, spfDataB64 } = req.body;
     const verifier = new Verifier();
-    const result = await verifier.semiVerify(pdfBufferB64, spfDataB64);
+    let result = {};
+    if (bindingDataHash) {
+      result = await verifier.autoVerify(bindingDataHash, pdfBufferB64, spfDataB64);
+    } else {
+      result = await verifier.semiVerify(pdfBufferB64, spfDataB64);
+    }
     res.send(result);
   } catch (err) {
     console.log(err);

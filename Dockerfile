@@ -2,7 +2,7 @@ FROM node:16.14 AS builder
 RUN apt update
 RUN apt install -y git
 WORKDIR /usr/src
-RUN git clone -b v1.2.0620 --depth 1 https://github.com/letsesign/letsesign-web-app.git
+RUN git clone -b v1.2.0621 --depth 1 https://github.com/letsesign/letsesign-web-app.git
 WORKDIR /usr/src/letsesign-web-app
 RUN npm install
 RUN npm run build --target=sender
