@@ -61,23 +61,16 @@ app.post('/submit-task/', async (req, res) => {
     return;
   }
   const rootDomain = apiKey.substring(apiKey.indexOf('@') + 1);
-  if (!req.body.payload.taskConfig.options.notificantEmail.includes(rootDomain)) {
+  const { taskConfig, templateInfo, templateData } = req.body;
+  if (!taskConfig.options.notificantEmail.includes(rootDomain)) {
     console.log('Invalid Email Address');
     res.status(200).send({ error: 'Invalid Email Address' });
     return;
   }
   try {
-    const { payload } = req.body;
     const caller = new Caller();
-    const byteBuffer = Buffer.from(payload.templateData, 'base64');
-    result = await caller.submitTask(
-      apiKey,
-      bearerSecret,
-      kmsPubKey,
-      payload.taskConfig,
-      payload.templateInfo,
-      byteBuffer
-    );
+    const byteBuffer = Buffer.from(templateData, 'base64');
+    result = await caller.submitTask(apiKey, bearerSecret, kmsPubKey, taskConfig, templateInfo, byteBuffer);
     if (result.retCode === 0) {
       res.status(200).send(result);
     } else {
@@ -100,46 +93,30 @@ app.post('/submit-bulk-task/', async (req, res) => {
     return;
   }
   const rootDomain = apiKey.substring(apiKey.indexOf('@') + 1);
-  if (!req.body.payload.bulkTaskConfig.notificantEmail.includes(rootDomain)) {
+  const { bulkTaskConfig, templateInfo, templateData, csvSignerInfoList } = req.body;
+  if (!bulkTaskConfig.notificantEmail.includes(rootDomain)) {
     console.log('Invalid Email Address');
     res.status(200).send({ error: 'Invalid Email Address' });
     return;
   }
   try {
-    const { payload } = req.body;
     const caller = new Caller();
-    const byteBuffer = Buffer.from(payload.templateData, 'base64');
-    // Dry Run
+    const byteBuffer = Buffer.from(templateData, 'base64');
     result = await caller.submitBulkTask(
       apiKey,
       bearerSecret,
       kmsPubKey,
-      payload.bulkTaskConfig,
-      payload.templateInfo,
+      bulkTaskConfig,
+      templateInfo,
       byteBuffer,
-      payload.csvSignerInfoList,
-      true
+      csvSignerInfoList,
+      false
     );
     if (result.retCode === 0) {
       res.status(200).send(result);
     } else {
       console.log(result);
       res.status(200).send({ error: `SDK Error: ${result.retCode}` });
-      return;
-    }
-    // Live Run
-    result = await caller.submitBulkTask(
-      apiKey,
-      bearerSecret,
-      kmsPubKey,
-      payload.bulkTaskConfig,
-      payload.templateInfo,
-      byteBuffer,
-      payload.csvSignerInfoList,
-      false
-    );
-    if (result.retCode !== 0) {
-      console.log(result);
     }
   } catch (err) {
     console.log(err);
