@@ -1,19 +1,19 @@
 # Let's eSign API Server
 
-Let's eSign API Server is an open-source eSignature API server for you to deploy at your site. It leverages the confidential eSigning service [Let's eSign](https://letsesign.org) to help businesses of all sizes attain confidential eSigning.
+Let's eSign API Server is an open-source confidential eSigning API server for you to deploy at your site. It can be understood as a *PDF document processing server* integrated with an *API proxy* to the confidential eSigning service [Let's eSign](https://letsesign.org) which operates [Let's eSign Enclave](https://github.com/letsesign/letsesign-enclave) in the cloud.
 
-Let's eSign API Server comes with an optional web app named Let's eSign Sender which is not only a showcase of Let's eSign API Server's capabilities but also ready for production use. Currently, the UI of Let's eSign Sender supports
+Let's eSign API Server comes with a built-in web app named Let's eSign Sender. Let's eSign Sender is not only a showcase of Let's eSign API Server's capabilities but also ready for production use. Currently, the web app UI supports
 - Single and multiple signers
 - Specific signing orders
 - Bulk signing requests
 - Document templates
 - SMS-based signer authentication
 
-When deployed at your site, Let's eSign API Server will encrypt your users' documents before sending them to the isolated [Let's eSign Enclave](https://github.com/letsesign/letsesign-enclave), which can then decrypt and process your users' documents in a confidential manner.
+When deployed at your site, Let's eSign API Server will encrypt your users' documents before sending them to the isolated Let's eSign Enclave, which can then decrypt and process your users' documents in a confidential manner.
 
 ## How to deploy
 
-**To deploy Let's eSign API Server, you need to [register your root domain with Let's eSign](https://github.com/letsesign/letsesign-docs/blob/main/HOWTO-register.md) first in order to get the required API key.**
+**To deploy Let's eSign API Server, you need to [register your root domain with Let's eSign](https://github.com/letsesign/letsesign-docs/blob/main/HOWTO-register.md) first in order to get the required `env.list` file which encapsulates the API key.**
 
 Depending on your choice there are two ways to deploy Let's eSign API Server:
 
@@ -48,6 +48,10 @@ Depending on your choice there are two ways to deploy Let's eSign API Server:
     ```
  
 4. Now you can access Let's eSign Sender at `http://localhost` using your browser, and can make API calls to Let's eSign API Server at `http://localhost` too.
+
+## How to make API calls
+
+Please check [Let's eSign API Server Examples](https://github.com/letsesign/letsesign-api-server-examples) for details.
 
 ## How to enable Auth0 integration
 
