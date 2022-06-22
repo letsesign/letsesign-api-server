@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Let's eSign API Server is an open-source confidential eSigning API server for you to deploy at your site. It can be understood as a *PDF Processor* integrated with an *API Proxy* connecting to the confidential eSigning service [Let's eSign](https://letsesign.org) which operates [Let's eSign Enclave](https://github.com/letsesign/letsesign-enclave) in the cloud.
+Let's eSign API Server is an open-source confidential eSigning API server for you to deploy at your site. It can be viewed as a *PDF Processor* integrated with an *API Proxy* connecting to the confidential eSigning service [Let's eSign](https://letsesign.org) which operates [Let's eSign Enclave](https://github.com/letsesign/letsesign-enclave) on the public cloud.
 
 Let's eSign API Server comes with a built-in web app named Let's eSign Sender. Let's eSign Sender is not only a showcase of Let's eSign API Server's capabilities but also ready for production use. Currently, the web app UI supports
 - Single and multiple signers
