@@ -109,8 +109,7 @@ app.post('/submit-bulk-task/', async (req, res) => {
       bulkTaskConfig,
       templateInfo,
       byteBuffer,
-      csvSignerInfoList,
-      false
+      csvSignerInfoList
     );
     if (result.retCode === 0) {
       res.status(200).send(result);
