@@ -1,10 +1,80 @@
 /* eslint-disable no-console */
 
 const aws = require('aws-sdk');
-
-const generatePolicy = require('./kms-generate-policy');
+const fetch = require('node-fetch');
+const { Validator } = require('jsonschema');
 
 const LETSESIGN_KMS_KEY_ALIAS = 'alias/letsesign-default';
+
+const getTCBInfo = async () => {
+  const fetchResult = await fetch('https://raw.githubusercontent.com/letsesign/letsesign-enclave/main/tcb-info.json');
+
+  if (!fetchResult.ok || fetchResult.status !== 200) {
+    throw new Error(`failed to retrieve TCB info`);
+  }
+
+  const tcbInfo = await fetchResult.json();
+
+  return tcbInfo;
+};
+
+const generateKMSPolicy = async (keyArn) => {
+  const validateRet = new Validator().validate(keyArn, { type: 'string', pattern: '^arn:aws:kms:us-east-1:' });
+  const getMostRecentVersions = (versionList) => {
+    if (versionList.length > 2) {
+      const orderedVersionList = versionList.sort((a, b) => a.issueTime - b.issueTime);
+      return [orderedVersionList[orderedVersionList.length - 2], orderedVersionList[orderedVersionList.length - 1]];
+    }
+
+    return versionList;
+  };
+
+  if (validateRet.valid) {
+    const iamId = keyArn.split(':')[4];
+    const output = {
+      Id: 'letsesign-key-policy',
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Sid: 'Enable IAM User Permissions',
+          Effect: 'Allow',
+          Principal: {
+            AWS: `arn:aws:iam::${iamId}:root`
+          },
+          Action: 'kms:*',
+          Resource: '*'
+        }
+      ]
+    };
+    const tcbInfo = await getTCBInfo();
+    const mostRecentVersions = getMostRecentVersions(tcbInfo.versionList);
+
+    for (let versionIndex = 0; versionIndex < mostRecentVersions.length; versionIndex += 1) {
+      const versionInfo = mostRecentVersions[versionIndex];
+
+      output.Statement.push({
+        Sid: 'Enable enclave data processing',
+        Effect: 'Allow',
+        Principal: {
+          AWS: 'arn:aws:iam::500455354473:user/letsesign-bot'
+        },
+        Action: 'kms:Decrypt',
+        Resource: '*',
+        Condition: {
+          StringEqualsIgnoreCase: {
+            'kms:RecipientAttestation:PCR0': versionInfo.pcrs['0'],
+            'kms:RecipientAttestation:PCR1': versionInfo.pcrs['1'],
+            'kms:RecipientAttestation:PCR2': versionInfo.pcrs['2']
+          }
+        }
+      });
+    }
+
+    return JSON.stringify(output, null, 2);
+  }
+
+  throw new Error('ERROR: invalid KMS key ARN format');
+};
 
 const splitString = (str, maxLength) => {
   if (str.length <= maxLength) return str;
@@ -59,7 +129,7 @@ const updateKMSKeyPolicy = async (kmsClient, keyArn) => {
     await kmsClient
       .putKeyPolicy({
         KeyId: keyArn,
-        Policy: generatePolicy.generateKMSPolicy(keyArn),
+        Policy: await generateKMSPolicy(keyArn),
         PolicyName: 'default'
       })
       .promise();
