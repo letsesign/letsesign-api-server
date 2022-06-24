@@ -4,14 +4,15 @@
 
 ## Introduction
 
-Let's eSign API Server is an open-source *Confidential eSignature API* server for you to deploy at your site. It provides normal eSignature APIs for your in-house apps to call and hides the complexities of confidential computing inside. When deployed at your site, Let's eSign API Server will encrypt your documents before sending them to the isolated [Let's eSign Enclave](https://github.com/letsesign/letsesign-enclave), which can decrypt and process your documents in a confidential manner.
+Let's eSign API Server is an open-source *confidential eSignature API* server for you to deploy at your site. It provides normal eSignature APIs for your in-house apps to call and hides the complexities of confidential computing inside. When deployed at your site, Let's eSign API Server will encrypt your documents before sending them to the isolated [Let's eSign Enclave](https://github.com/letsesign/letsesign-enclave), which can decrypt and process your documents in a confidential manner.
 
 Let's eSign API Server supports various features including
-- Single and multiple signers
-- Specific signing orders
-- Bulk signing requests
-- Document templates
-- SMS-based signer authentication
+- SMS Authentication
+- Bulk Send
+- Document Template
+- Single & Multiple Signers
+- Specific Signing Order
+- Email Notification
 
 ## How to deploy
 
