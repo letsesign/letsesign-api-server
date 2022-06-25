@@ -4,57 +4,32 @@ const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
-const { auth } = require('express-openid-connect');
 
 const { Caller } = require('./lib/caller');
 const { Verifier } = require('./lib/verifier');
 
 let kmsPubKey = '';
-let auth0Config = null;
 try {
   kmsPubKey = fs.readFileSync(path.join(__dirname, '/kmsPublicKey.pem')).toString('utf-8');
-  auth0Config = JSON.parse(fs.readFileSync(path.join(__dirname, '/auth0-config.json')).toString('utf-8'));
-  if (kmsPubKey === '' || auth0Config === null) {
-    throw new Error('Invalid PEM or JSON');
+  if (kmsPubKey === '') {
+    throw new Error('Error: Invalid PEM');
   }
 } catch (err) {
   console.log(err);
   process.exit(1);
 }
 
-const config = {
-  authRequired: auth0Config.authRequired,
-  auth0Logout: auth0Config.auth0Logout,
-  secret: auth0Config.secret,
-  baseURL: auth0Config.baseURL,
-  clientID: auth0Config.clientID,
-  issuerBaseURL: auth0Config.issuerBaseURL
-};
-
-const { webApp, apiKey, bearerSecret } = process.env;
+const { apiKey, bearerSecret } = process.env;
 
 const app = express();
 app.use(cors());
-app.use(auth(config));
 app.use(express.json({ limit: '40mb' }));
-app.use(express.static('build'));
 
 app.get('/', (req, res) => {
-  if (!req.oidc.isAuthenticated() && config.authRequired === true) {
-    res.redirect('login');
-  } else {
-    if (webApp === 'on') {
-      res.sendFile(path.join(__dirname, '/index.html'));
-      return;
-    }
-    res.send("Let's eSign Server is running");
-  }
+  res.send("Let's eSign Server is running");
 });
 
 app.post('/submit-task/', async (req, res) => {
-  if (!req.oidc.isAuthenticated() && config.authRequired === true) {
-    res.status(200).send({ error: 'Not Login' });
-  }
   if (!apiKey) {
     console.log('Invalid API Key');
     res.status(200).send({ error: 'Invalid API Key' });
@@ -84,9 +59,6 @@ app.post('/submit-task/', async (req, res) => {
 });
 
 app.post('/submit-bulk-task/', async (req, res) => {
-  if (!req.oidc.isAuthenticated() && config.authRequired === true) {
-    res.status(200).send({ error: 'Not Login' });
-  }
   if (!apiKey) {
     console.log('Invalid API Key');
     res.status(200).send({ error: 'Invalid API Key' });
@@ -124,9 +96,6 @@ app.post('/submit-bulk-task/', async (req, res) => {
 });
 
 app.post('/verify-pdf/', async (req, res) => {
-  if (!req.oidc.isAuthenticated() && config.authRequired === true) {
-    res.status(200).send({ error: 'Not login' });
-  }
   try {
     const { bindingDataHash, pdfBufferB64, spfDataB64 } = req.body;
     const verifier = new Verifier();
@@ -147,35 +116,4 @@ app.get('*', (req, res) => {
   res.redirect('/');
 });
 
-const getConfig = async () => {
-  const siteConfigPath = '/root/build/config.js';
-  try {
-    const siteConfigStr = fs
-      .readFileSync(siteConfigPath)
-      .toString('utf-8')
-      .replace('window.siteConfig=', '')
-      .replaceAll('!0', 'true')
-      .replaceAll('!1', 'false')
-      .replaceAll(';', '')
-      .replaceAll(':', '":')
-      .replaceAll(',', ',"')
-      .replaceAll('{', '{"')
-      .replaceAll('""', '"');
-    const siteConfig = JSON.parse(siteConfigStr);
-    const caller = new Caller();
-    const serverConfig = await caller.getConfig(apiKey);
-    siteConfig.enablePhoneNo = serverConfig.enablePhoneNo;
-    siteConfig.maxSignerNumber = serverConfig.maxSignerNumber;
-    siteConfig.maxBulkSendSignerNumber = serverConfig.maxBulkSendSignerNumber;
-    siteConfig.maxFieldPerType = serverConfig.maxFieldPerType;
-    siteConfig.maxFileSizeInMb = serverConfig.maxFileSizeInMb;
-    const content = `window.siteConfig=${JSON.stringify(siteConfig)}`;
-    fs.writeFileSync(siteConfigPath, content);
-  } catch (err) {
-    console.log(err);
-    process.exit(1);
-  }
-};
-
-getConfig();
 app.listen(80);
