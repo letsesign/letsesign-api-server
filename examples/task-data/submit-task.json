@@ -1,18 +1,18 @@
 {
-    "taskConfig": {
-        "options": {
-            "inOrder": true,
-            "senderMsg": "",
-            "notificantEmail": "",
-            "notificantLocale": "en-US"
-        },
-        "signerInfoList": [
-            {
-                "name": "",
-                "emailAddr": "",
-                "locale": "en-US",
-                "phoneNumber": ""
-            }
-        ]
-    }
+  "taskConfig": {
+    "options": {
+      "inOrder": true,
+      "senderMsg": "",
+      "notificantEmail": "",
+      "notificantLocale": "en-US"
+    },
+    "signerInfoList": [
+      {
+        "name": "",
+        "emailAddr": "",
+        "locale": "en-US",
+        "phoneNumber": ""
+      }
+    ]
+  }
 }
