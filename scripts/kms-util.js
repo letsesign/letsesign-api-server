@@ -1,19 +1,19 @@
 /* eslint-disable no-console */
 
 const aws = require('aws-sdk');
-const fetch = require('node-fetch');
+const axios = require('axios');
 const { Validator } = require('jsonschema');
 
 const LETSESIGN_KMS_KEY_ALIAS = 'alias/letsesign-default';
 
 const getTCBInfo = async () => {
-  const fetchResult = await fetch('https://raw.githubusercontent.com/letsesign/letsesign-enclave/main/tcb-info.json');
+  const result = await axios.get('https://raw.githubusercontent.com/letsesign/letsesign-enclave/main/tcb-info.json');
 
-  if (!fetchResult.ok || fetchResult.status !== 200) {
+  if (result.status !== 200) {
     throw new Error(`failed to retrieve TCB info`);
   }
 
-  const tcbInfo = await fetchResult.json();
+  const tcbInfo = result.data;
 
   return tcbInfo;
 };
