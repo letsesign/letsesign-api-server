@@ -16,7 +16,7 @@ Let's eSign API Server supports various features including
 
 ## How to deploy
 
-**To deploy Let's eSign API Server, you need to [register your root domain with Let's eSign](https://github.com/letsesign/letsesign-docs/blob/main/HOWTO-register.md) first in order to get the required `env.list` file which encapsulates the API key.**
+**To deploy Let's eSign API Server, you need to [register your root domain with Let's eSign](https://github.com/letsesign/letsesign-register/blob/main/doc/HOWTO-register.md) first in order to get the required `env.list` file which encapsulates the API key.**
 
 Depending on your choice there are two ways to deploy Let's eSign API Server:
 
@@ -54,4 +54,4 @@ Depending on your choice there are two ways to deploy Let's eSign API Server:
 
 ## How to make API calls
 
-Please check [Let's eSign API Server Examples](https://github.com/letsesign/letsesign-api-server-examples) for the details.
+Please check [Let's eSign API Server Examples](https://github.com/letsesign/letsesign-api-server/tree/main/examples) for the details.
