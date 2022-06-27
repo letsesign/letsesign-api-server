@@ -47,7 +47,7 @@ Depending on your choice there are two ways to deploy Let's eSign API Server:
 3. Next, run the following:
 
     ```
-    docker run -d -p 80:80 --env-file letsesign-api-server
+    docker run -d -p 80:80 --env-file ./env.list letsesign-api-server
     ```
 
 4. Now you can make API calls to Let's eSign API Server at `http://localhost`.
