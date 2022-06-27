@@ -45,7 +45,7 @@ app.post('/submit-task/', async (req, res) => {
   try {
     const caller = new Caller();
     const byteBuffer = Buffer.from(templateData, 'base64');
-    result = await caller.submitTask(apiKey, bearerSecret, kmsPubKey, taskConfig, templateInfo, byteBuffer);
+    const result = await caller.submitTask(apiKey, bearerSecret, kmsPubKey, taskConfig, templateInfo, byteBuffer);
     if (result.retCode === 0) {
       res.status(200).send(result);
     } else {
@@ -65,8 +65,8 @@ app.post('/submit-bulk-task/', async (req, res) => {
     return;
   }
   const rootDomain = apiKey.substring(apiKey.indexOf('@') + 1);
-  const { bulkTaskConfig, templateInfo, templateData, csvSignerInfoList } = req.body;
-  if (!bulkTaskConfig.notificantEmail.includes(rootDomain)) {
+  const { taskConfig, templateInfo, templateData } = req.body;
+  if (!taskConfig.options.notificantEmail.includes(rootDomain)) {
     console.log('Invalid Email Address');
     res.status(200).send({ error: 'Invalid Email Address' });
     return;
@@ -74,15 +74,7 @@ app.post('/submit-bulk-task/', async (req, res) => {
   try {
     const caller = new Caller();
     const byteBuffer = Buffer.from(templateData, 'base64');
-    result = await caller.submitBulkTask(
-      apiKey,
-      bearerSecret,
-      kmsPubKey,
-      bulkTaskConfig,
-      templateInfo,
-      byteBuffer,
-      csvSignerInfoList
-    );
+    const result = await caller.submitBulkTask(apiKey, bearerSecret, kmsPubKey, taskConfig, templateInfo, byteBuffer);
     if (result.retCode === 0) {
       res.status(200).send(result);
     } else {
