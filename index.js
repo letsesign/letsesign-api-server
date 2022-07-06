@@ -15,7 +15,7 @@ try {
     throw new Error('Error: Invalid PEM');
   }
 } catch (err) {
-  console.log(err);
+  console.error(err);
   process.exit(1);
 }
 
@@ -29,78 +29,109 @@ app.get('/', (req, res) => {
   res.send("Let's eSign Server is running");
 });
 
-app.post('/submit-task/', async (req, res) => {
+// send API route
+app.post('/send/', async (req, res) => {
   if (!apiKey) {
-    console.log('Invalid API Key');
-    res.status(200).send({ error: 'Invalid API Key' });
+    console.error('Invalid API Key setting');
+    res.status(409).send({ errorMsg: 'Invalid API Key setting' });
     return;
   }
-  const rootDomain = apiKey.substring(apiKey.indexOf('@') + 1);
-  const { taskConfig, templateInfo, templateData } = req.body;
-  if (!taskConfig.options.notificantEmail.includes(rootDomain)) {
-    console.log('Invalid Email Address');
-    res.status(200).send({ error: 'Invalid Email Address' });
+  if (!bearerSecret) {
+    console.error('Invalid bearerSecret setting');
+    res.status(409).send({ errorMsg: 'Invalid bearerSecret setting' });
     return;
   }
+  if (!kmsPubKey) {
+    console.error('Invalid KMS public key setting');
+    res.status(409).send({ errorMsg: 'Invalid KMS public key setting' });
+    return;
+  }
+
+  const { taskConfig, fieldList, pdfFileName, pdfFileData } = req.body;
   try {
     const caller = new Caller();
-    const byteBuffer = Buffer.from(templateData, 'base64');
-    const result = await caller.submitTask(apiKey, bearerSecret, kmsPubKey, taskConfig, templateInfo, byteBuffer);
-    if (result.retCode === 0) {
-      res.status(200).send(result);
-    } else {
-      console.log(result);
-      res.status(200).send({ error: `SDK Error: ${result.retCode}` });
-    }
+    const result = await caller.submitTask(
+      apiKey,
+      bearerSecret,
+      kmsPubKey,
+      taskConfig,
+      fieldList,
+      pdfFileName,
+      pdfFileData
+    );
+    if (result.httpCode === 200) res.status(200).send(result.response);
+    else res.status(result.httpCode).send({ errorMsg: result.errorMsg });
   } catch (err) {
-    console.log(err);
-    res.status(200).send({ error: 'Backend Error' });
+    console.error(err);
+    res.status(500).send({ errorMsg: 'Backend Error' });
   }
 });
 
-app.post('/submit-bulk-task/', async (req, res) => {
+// bulk_send API route
+app.post('/bulk_send/', async (req, res) => {
   if (!apiKey) {
-    console.log('Invalid API Key');
-    res.status(200).send({ error: 'Invalid API Key' });
+    console.error('Invalid API Key setting');
+    res.status(401).send({ errorMsg: 'Invalid API Key setting' });
     return;
   }
-  const rootDomain = apiKey.substring(apiKey.indexOf('@') + 1);
-  const { taskConfig, templateInfo, templateData } = req.body;
-  if (!taskConfig.options.notificantEmail.includes(rootDomain)) {
-    console.log('Invalid Email Address');
-    res.status(200).send({ error: 'Invalid Email Address' });
+  if (!bearerSecret) {
+    console.error('Invalid bearerSecret setting');
+    res.status(401).send({ errorMsg: 'Invalid bearerSecret setting' });
     return;
   }
+  if (!kmsPubKey) {
+    console.error('Invalid KMS public key setting');
+    res.status(401).send({ errorMsg: 'Invalid KMS public key setting' });
+    return;
+  }
+
+  const { taskConfig, fieldList, pdfFileName, pdfFileData } = req.body;
   try {
     const caller = new Caller();
-    const byteBuffer = Buffer.from(templateData, 'base64');
-    const result = await caller.submitBulkTask(apiKey, bearerSecret, kmsPubKey, taskConfig, templateInfo, byteBuffer);
-    if (result.retCode === 0) {
-      res.status(200).send(result);
-    } else {
-      console.log(result);
-      res.status(200).send({ error: `SDK Error: ${result.retCode}` });
-    }
+    const result = await caller.submitBulkTask(
+      apiKey,
+      bearerSecret,
+      kmsPubKey,
+      taskConfig,
+      fieldList,
+      pdfFileName,
+      pdfFileData
+    );
+    if (result.httpCode === 200) res.status(200).send(result.response);
+    else res.status(result.httpCode).send({ errorMsg: result.errorMsg });
   } catch (err) {
-    console.log(err);
-    res.status(200).send({ error: 'Backend Error' });
+    console.error(err);
+    res.status(500).send({ errorMsg: 'Backend Error' });
   }
 });
 
-app.post('/verify-pdf/', async (req, res) => {
+// verify_pdf API route
+app.post('/verify_pdf/', async (req, res) => {
   try {
-    const { bindingDataHash, pdfBufferB64, spfDataB64 } = req.body;
+    const { bindingDataHash, pdfBufferB64, spfBufferB64 } = req.body;
     const verifier = new Verifier();
-    let result = {};
-    if (bindingDataHash) {
-      result = await verifier.autoVerify(bindingDataHash, pdfBufferB64, spfDataB64);
-    } else {
-      result = await verifier.semiVerify(pdfBufferB64, spfDataB64);
-    }
-    res.send(result);
+    const result = await verifier.autoVerify(bindingDataHash, pdfBufferB64, spfBufferB64);
+
+    if ('error' in result) res.status(400).send({ errorMsg: result.error });
+    else res.status(200).send(result);
   } catch (err) {
-    console.log(err);
-    res.status(200).send({ error: 'Backend Error' });
+    console.error(err);
+    res.status(500).send({ errorMsg: 'Backend Error' });
+  }
+});
+
+// verify_pdf_with_human API route
+app.post('/verify_pdf_with_human/', async (req, res) => {
+  try {
+    const { pdfBufferB64, spfBufferB64 } = req.body;
+    const verifier = new Verifier();
+    const result = await verifier.semiVerify(pdfBufferB64, spfBufferB64);
+
+    if ('error' in result) res.status(400).send({ errorMsg: result.error });
+    else res.status(200).send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ errorMsg: 'Backend Error' });
   }
 });
 
