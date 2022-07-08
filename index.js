@@ -192,6 +192,176 @@ app.post('/create_bulk_send_template/', async (req, res) => {
   }
 });
 
+// preview_send API route
+app.post('/preview_send/', async (req, res) => {
+  if (!apiKey) {
+    console.error('Invalid API Key setting');
+    res.status(409).send({ errorMsg: 'Invalid API Key setting' });
+    return;
+  }
+  if (!bearerSecret) {
+    console.error('Invalid bearerSecret setting');
+    res.status(409).send({ errorMsg: 'Invalid bearerSecret setting' });
+    return;
+  }
+  if (!kmsPubKey) {
+    console.error('Invalid KMS public key setting');
+    res.status(409).send({ errorMsg: 'Invalid KMS public key setting' });
+    return;
+  }
+
+  const { taskConfig, fieldList, pdfFileName, pdfFileData } = req.body;
+  try {
+    const caller = new Caller();
+    const result = await caller.submitTask(
+      apiKey,
+      bearerSecret,
+      kmsPubKey,
+      taskConfig,
+      fieldList,
+      pdfFileName,
+      pdfFileData,
+      true
+    );
+    if (result.httpCode === 200) res.status(200).send(result.response);
+    else res.status(result.httpCode).send({ errorMsg: result.errorMsg });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ errorMsg: 'Backend Error' });
+  }
+});
+
+// preview_send_with_template API route
+app.post('/preview_send_with_template/', async (req, res) => {
+  if (!apiKey) {
+    console.error('Invalid API Key setting');
+    res.status(409).send({ errorMsg: 'Invalid API Key setting' });
+    return;
+  }
+  if (!bearerSecret) {
+    console.error('Invalid bearerSecret setting');
+    res.status(409).send({ errorMsg: 'Invalid bearerSecret setting' });
+    return;
+  }
+  if (!kmsPubKey) {
+    console.error('Invalid KMS public key setting');
+    res.status(409).send({ errorMsg: 'Invalid KMS public key setting' });
+    return;
+  }
+
+  const { taskConfig, template } = req.body;
+  try {
+    const caller = new Caller();
+    const result = await caller.submitTaskWithTemplate(apiKey, bearerSecret, kmsPubKey, taskConfig, template, true);
+    if (result.httpCode === 200) res.status(200).send(result.response);
+    else res.status(result.httpCode).send({ errorMsg: result.errorMsg });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ errorMsg: 'Backend Error' });
+  }
+});
+
+// preview_bulk_send API route
+app.post('/preview_bulk_send/', async (req, res) => {
+  if (!apiKey) {
+    console.error('Invalid API Key setting');
+    res.status(401).send({ errorMsg: 'Invalid API Key setting' });
+    return;
+  }
+  if (!bearerSecret) {
+    console.error('Invalid bearerSecret setting');
+    res.status(401).send({ errorMsg: 'Invalid bearerSecret setting' });
+    return;
+  }
+  if (!kmsPubKey) {
+    console.error('Invalid KMS public key setting');
+    res.status(401).send({ errorMsg: 'Invalid KMS public key setting' });
+    return;
+  }
+
+  const { taskConfig, fieldList, pdfFileName, pdfFileData, signerNo } = req.body;
+  try {
+    const caller = new Caller();
+    let result = null;
+
+    if (signerNo) {
+      result = await caller.submitBulkTask(
+        apiKey,
+        bearerSecret,
+        kmsPubKey,
+        taskConfig,
+        fieldList,
+        pdfFileName,
+        pdfFileData,
+        true,
+        signerNo
+      );
+    } else {
+      result = await caller.submitBulkTask(
+        apiKey,
+        bearerSecret,
+        kmsPubKey,
+        taskConfig,
+        fieldList,
+        pdfFileName,
+        pdfFileData,
+        true
+      );
+    }
+
+    if (result.httpCode === 200) res.status(200).send(result.response);
+    else res.status(result.httpCode).send({ errorMsg: result.errorMsg });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ errorMsg: 'Backend Error' });
+  }
+});
+
+// preview_bulk_send_with_template API route
+app.post('/preview_bulk_send_with_template/', async (req, res) => {
+  if (!apiKey) {
+    console.error('Invalid API Key setting');
+    res.status(401).send({ errorMsg: 'Invalid API Key setting' });
+    return;
+  }
+  if (!bearerSecret) {
+    console.error('Invalid bearerSecret setting');
+    res.status(401).send({ errorMsg: 'Invalid bearerSecret setting' });
+    return;
+  }
+  if (!kmsPubKey) {
+    console.error('Invalid KMS public key setting');
+    res.status(401).send({ errorMsg: 'Invalid KMS public key setting' });
+    return;
+  }
+
+  const { taskConfig, template, signerNo } = req.body;
+  try {
+    const caller = new Caller();
+    let result = null;
+
+    if (signerNo) {
+      result = await caller.submitBulkTaskWithTemplate(
+        apiKey,
+        bearerSecret,
+        kmsPubKey,
+        taskConfig,
+        template,
+        true,
+        signerNo
+      );
+    } else {
+      result = await caller.submitBulkTaskWithTemplate(apiKey, bearerSecret, kmsPubKey, taskConfig, template, true);
+    }
+
+    if (result.httpCode === 200) res.status(200).send(result.response);
+    else res.status(result.httpCode).send({ errorMsg: result.errorMsg });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ errorMsg: 'Backend Error' });
+  }
+});
+
 // verify_pdf API route
 app.post('/verify_pdf/', async (req, res) => {
   try {
