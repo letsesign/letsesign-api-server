@@ -1,11 +1,11 @@
 #!/bin/bash
 
-curl -sO https://raw.githubusercontent.com/letsesign/letsesign-enclave/main/tcb-info.json
+curl -s https://raw.githubusercontent.com/letsesign/letsesign-enclave/main/tcb-info.json -o dist/tcb-info.json
 
-node ./scripts/kms-update.js
-node ./scripts/kms-download.js
+node ./dist/scripts/kms-update.js
+node ./dist/scripts/kms-download.js
 
 unset awsAccessKeyID
 unset awsSecretAccessKey
 
-pm2-runtime index.js
+pm2-runtime ./dist/index.js

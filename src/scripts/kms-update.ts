@@ -1,12 +1,10 @@
-/* eslint-disable no-console */
-
-const kmsUtil = require('./kms-util');
+import { updatePolicy } from './kms-util';
 
 const run = async () => {
   try {
     const { awsAccessKeyID, awsSecretAccessKey } = process.env;
     if (awsAccessKeyID && awsSecretAccessKey) {
-      await kmsUtil.updatePolicy(awsAccessKeyID, awsSecretAccessKey);
+      await updatePolicy(awsAccessKeyID, awsSecretAccessKey);
     } else {
       throw new Error('ERROR: Invalid AWS credentials');
     }

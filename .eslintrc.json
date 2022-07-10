@@ -10,20 +10,20 @@
   "settings": {
     "import/resolver": {
       "node": {
-        "extensions": [".js"],
-        "moduleDirectory": ["lib", "node_modules"]
+        "extensions": [".js", ".ts"],
+        "moduleDirectory": ["./node_modules"]
       }
     }
   },
   "rules": {
-    "no-undef": "off",
+    "no-console": "off",
     "no-await-in-loop": "off",
     "import/prefer-default-export": "off",
     "import/extensions": [
       "error",
       "ignorePackages",
       {
-        "js": "never"
+        "ts": "never"
       }
     ]
   }

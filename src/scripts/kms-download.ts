@@ -1,14 +1,12 @@
-/* eslint-disable no-console */
-
-const fs = require('fs');
-const kmsUtil = require('./kms-util');
+import { writeFileSync } from 'fs';
+import { downloadPubKey } from './kms-util';
 
 const run = async () => {
   try {
     const { awsAccessKeyID, awsSecretAccessKey } = process.env;
     if (awsAccessKeyID && awsSecretAccessKey) {
-      const kmsPubKey = await kmsUtil.downloadPubKey(awsAccessKeyID, awsSecretAccessKey);
-      fs.writeFileSync('kmsPublicKey.pem', kmsPubKey);
+      const kmsPubKey = await downloadPubKey(awsAccessKeyID, awsSecretAccessKey);
+      writeFileSync('kmsPublicKey.pem', kmsPubKey);
     } else {
       throw new Error('ERROR: Invalid AWS credentials');
     }

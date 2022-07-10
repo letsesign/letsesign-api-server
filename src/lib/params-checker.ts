@@ -1,9 +1,8 @@
-/* eslint-disable no-console */
 const { Validator } = require('jsonschema');
 const { isValidPhoneNumber } = require('libphonenumber-js');
 const corePdfManager = require('pdfjs-dist/lib/core/pdf_manager');
 
-const checkerErrorCode = {
+export const checkerErrorCode = {
   SUCCESS: 0,
   INVALID_TEMPLATE_DATA: 1,
   PWD_PROTECTED_PDF: 2,
@@ -66,11 +65,11 @@ const bulkFieldSchema = {
   required: ['fieldInfo']
 };
 
-const toArrayBuffer = (nodeBuffer) => {
+const toArrayBuffer = (nodeBuffer: any) => {
   return nodeBuffer.buffer.slice(nodeBuffer.byteOffset, nodeBuffer.byteOffset + nodeBuffer.byteLength);
 };
 
-const checkSendAPIParams = (taskConfig, fieldList, pdfFileName, isPreview) => {
+export const checkSendAPIParams = (taskConfig: any, fieldList: any, pdfFileName: any, isPreview: any) => {
   const schema = {
     type: 'object',
     properties: {
@@ -105,7 +104,7 @@ const checkSendAPIParams = (taskConfig, fieldList, pdfFileName, isPreview) => {
   return new Validator().validate(params, schema);
 };
 
-const checkSendWithTemplateAPIParams = (taskConfig, isPreview) => {
+export const checkSendWithTemplateAPIParams = (taskConfig: any, isPreview: any) => {
   const schema = {
     type: 'object',
     properties: {
@@ -134,7 +133,13 @@ const checkSendWithTemplateAPIParams = (taskConfig, isPreview) => {
   return new Validator().validate(params, schema);
 };
 
-const checkBulkSendAPIParams = (taskConfig, fieldList, pdfFileName, isPreview, signerNo) => {
+export const checkBulkSendAPIParams = (
+  taskConfig: any,
+  fieldList: any,
+  pdfFileName: any,
+  isPreview: any,
+  signerNo: any
+) => {
   const schema = {
     type: 'object',
     properties: {
@@ -169,7 +174,7 @@ const checkBulkSendAPIParams = (taskConfig, fieldList, pdfFileName, isPreview, s
   return new Validator().validate(params, schema);
 };
 
-const checkBulkSendWithTemplateAPIParams = (taskConfig, isPreview, signerNo) => {
+export const checkBulkSendWithTemplateAPIParams = (taskConfig: any, isPreview: any, signerNo: any) => {
   const schema = {
     type: 'object',
     properties: {
@@ -198,7 +203,7 @@ const checkBulkSendWithTemplateAPIParams = (taskConfig, isPreview, signerNo) => 
   return new Validator().validate(params, schema);
 };
 
-const checkCreateSendTemplateAPIParams = (fieldList, pdfFileName) => {
+export const checkCreateSendTemplateAPIParams = (fieldList: any, pdfFileName: any) => {
   const schema = {
     type: 'object',
     properties: {
@@ -215,7 +220,7 @@ const checkCreateSendTemplateAPIParams = (fieldList, pdfFileName) => {
   return new Validator().validate(params, schema);
 };
 
-const checkCreateBulkSendTemplateAPIParams = (fieldList, pdfFileName) => {
+export const checkCreateBulkSendTemplateAPIParams = (fieldList: any, pdfFileName: any) => {
   const schema = {
     type: 'object',
     properties: {
@@ -232,7 +237,7 @@ const checkCreateBulkSendTemplateAPIParams = (fieldList, pdfFileName) => {
   return new Validator().validate(params, schema);
 };
 
-const checkParsedTemplate = (parsedTemplate) => {
+export const checkParsedTemplate = (parsedTemplate: any) => {
   const schema = {
     type: 'object',
     properties: {
@@ -275,14 +280,14 @@ const checkParsedTemplate = (parsedTemplate) => {
   return new Validator().validate(parsedTemplate, schema);
 };
 
-const checkPdfFileData = (pdfFileDataBuffer) => {
+export const checkPdfFileData = (pdfFileDataBuffer: any) => {
   // check if password proected or secured
   try {
     const tmpPdfMgr = new corePdfManager.LocalPdfManager('dummy', toArrayBuffer(pdfFileDataBuffer), '', {}, '');
     tmpPdfMgr.pdfDocument.parseStartXRef();
     try {
       tmpPdfMgr.pdfDocument.parse();
-    } catch (parseErr) {
+    } catch (parseErr: any) {
       if (parseErr.code && parseErr.code === 1) {
         return { retCode: checkerErrorCode.PWD_PROTECTED_PDF };
       }
@@ -328,7 +333,7 @@ const checkPdfFileData = (pdfFileDataBuffer) => {
   return { retCode: checkerErrorCode.SUCCESS };
 };
 
-const checkSignerPhoneNum = (signerInfoList) => {
+export const checkSignerPhoneNum = (signerInfoList: any) => {
   for (let signerIndex = 0; signerIndex !== signerInfoList.length; signerIndex += 1) {
     const { phoneNumber } = signerInfoList[signerIndex];
     if (phoneNumber && phoneNumber.length > 0) {
@@ -344,7 +349,13 @@ const checkSignerPhoneNum = (signerInfoList) => {
   return { retCode: checkerErrorCode.SUCCESS };
 };
 
-const checkWithLimitConfig = (limitConfig, signerInfoList, signerFieldList, pdfFileDataBuffer, isBulk) => {
+export const checkWithLimitConfig = (
+  limitConfig: any,
+  signerInfoList: any,
+  signerFieldList: any,
+  pdfFileDataBuffer: any,
+  isBulk: any
+) => {
   const { maxSignerNumber, maxFieldPerType, maxFileSizeInMb, maxBulkSendSignerNumber } = limitConfig;
 
   if (isBulk) {
@@ -358,7 +369,7 @@ const checkWithLimitConfig = (limitConfig, signerInfoList, signerFieldList, pdfF
 
   for (let signerIndex = 0; signerIndex < signerFieldList.length; signerIndex += 1) {
     const signerField = signerFieldList[signerIndex];
-    const fieldGroup = {};
+    const fieldGroup: { [key: string]: any } = {};
 
     for (let fieldIndex = 0; fieldIndex < signerField.fieldList.length; fieldIndex += 1) {
       const field = signerField.fieldList[fieldIndex];
@@ -386,18 +397,4 @@ const checkWithLimitConfig = (limitConfig, signerInfoList, signerFieldList, pdfF
     return { retCode: checkerErrorCode.MEET_PDF_SIZE_LIMIT, limitVal: maxFileSizeInMb };
 
   return { retCode: checkerErrorCode.SUCCESS };
-};
-
-module.exports = {
-  checkSendAPIParams,
-  checkSendWithTemplateAPIParams,
-  checkBulkSendAPIParams,
-  checkBulkSendWithTemplateAPIParams,
-  checkCreateSendTemplateAPIParams,
-  checkCreateBulkSendTemplateAPIParams,
-  checkParsedTemplate,
-  checkPdfFileData,
-  checkSignerPhoneNum,
-  checkWithLimitConfig,
-  checkerErrorCode
 };

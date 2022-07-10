@@ -1,14 +1,14 @@
-/* eslint-disable no-console */
-const JSZip = require('jszip');
-// const { Caller } = require('./caller');
-const {
+import {
   checkCreateSendTemplateAPIParams,
   checkCreateBulkSendTemplateAPIParams,
   checkPdfFileData,
   checkerErrorCode
-} = require('./params-checker');
+} from './params-checker';
 
-const createTemplate = async (templateInfo, pdfFileName, pdfFileDataBuffer) => {
+const JSZip = require('jszip');
+// const { Caller } = require('./caller');
+
+const createTemplate = async (templateInfo: any, pdfFileName: any, pdfFileDataBuffer: any) => {
   const zip = new JSZip();
 
   zip.file('template.json', JSON.stringify({ pdfFileName, templateInfo }));
@@ -19,7 +19,7 @@ const createTemplate = async (templateInfo, pdfFileName, pdfFileDataBuffer) => {
   return zipB64;
 };
 
-const parseTemplate = async (template) => {
+export const parseTemplate = async (template: any) => {
   const zip = new JSZip();
   let unzipResult = null;
 
@@ -47,10 +47,11 @@ const parseTemplate = async (template) => {
   }
 };
 
-const createSendTemplate = async (fieldList, pdfFileName, pdfFileData) => {
+export const createSendTemplate = async (fieldList: any, pdfFileName: any, pdfFileData: any) => {
   const resp = {
     httpCode: 500,
-    errorMsg: 'Undefined error'
+    errorMsg: 'Undefined error',
+    response: {}
   };
 
   try {
@@ -85,7 +86,7 @@ const createSendTemplate = async (fieldList, pdfFileName, pdfFileData) => {
 
     // check fieldList
     let maxSignerNo = 0;
-    const signerGroup = {};
+    const signerGroup: { [key: string]: any } = {}; // .ts fix
     for (let fieldIndex = 0; fieldIndex !== fieldList.length; fieldIndex += 1) {
       const fieldData = fieldList[fieldIndex];
 
@@ -104,7 +105,7 @@ const createSendTemplate = async (fieldList, pdfFileName, pdfFileData) => {
 
     const internalTemplateInfo = {
       version: '1.1',
-      signerList: new Array(maxSignerNo + 1).fill().map(() => ({ fieldList: [] }))
+      signerList: new Array(maxSignerNo + 1).fill({}).map(() => ({ fieldList: [] })) // .ts fix
     };
     for (let signerIndex = 0; signerIndex <= maxSignerNo; signerIndex += 1) {
       if (!(signerIndex.toString() in signerGroup)) {
@@ -144,10 +145,11 @@ const createSendTemplate = async (fieldList, pdfFileName, pdfFileData) => {
   return resp;
 };
 
-const createBulkSendTemplate = async (fieldList, pdfFileName, pdfFileData) => {
+export const createBulkSendTemplate = async (fieldList: any, pdfFileName: any, pdfFileData: any) => {
   const resp = {
     httpCode: 500,
-    errorMsg: 'Undefined error'
+    errorMsg: 'Undefined error',
+    response: {}
   };
 
   try {
@@ -182,9 +184,10 @@ const createBulkSendTemplate = async (fieldList, pdfFileName, pdfFileData) => {
 
     // - check fieldList
     let sigFieldExist = false;
+    const ary: object[] = [];
     const internalTemplateInfo = {
       version: '1.1',
-      signerList: [{ fieldList: [] }]
+      signerList: [{ fieldList: ary }] // .ts fix
     };
     for (let fieldIndex = 0; fieldIndex !== fieldList.length; fieldIndex += 1) {
       const fieldData = fieldList[fieldIndex];
@@ -216,10 +219,4 @@ const createBulkSendTemplate = async (fieldList, pdfFileName, pdfFileData) => {
   }
 
   return resp;
-};
-
-module.exports = {
-  createSendTemplate,
-  createBulkSendTemplate,
-  parseTemplate
 };

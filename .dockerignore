@@ -1,0 +1,11 @@
+node_modules
+dist
+.babelrc.js
+.dockerignore
+.eslintrc.json
+.git
+.gitignore
+.prettierrc
+Dockerfile
+LICENSE
+README.md
