@@ -54,4 +54,4 @@ Depending on your choice there are two ways to deploy Let's eSign API Server:
 
 ## How to make API calls
 
-Please check [Let's eSign API Server Examples](https://github.com/letsesign/letsesign-api-server/tree/main/examples) for the details.
+Please check [**Let's eSign API Server API (v1.1.4)**](https://letsesign.github.io/docs/api/v1.1.4/) for the details.
