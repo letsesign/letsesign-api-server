@@ -295,10 +295,9 @@ export const submitTask = async (
     }
 
     // - check fieldList
-    const ary: object[] = [];
     const internalTemplateInfo = {
       version: '1.1',
-      signerList: new Array(taskConfig.signerInfoList.length).fill({}).map(() => ({ fieldList: ary })) // .ts fix
+      signerList: new Array(taskConfig.signerInfoList.length).fill({}).map(() => ({ fieldList: [] as object[] })) // .ts fix
     };
     const sigFieldExist = new Array(internalTemplateInfo.signerList.length).map(() => false); // .ts fix
     for (let fieldIndex = 0; fieldIndex !== fieldList.length; fieldIndex += 1) {
@@ -652,10 +651,9 @@ export const submitBulkTask = async (
 
     // - check fieldList
     let sigFieldExist = false;
-    const ary: object[] = [];
     const internalTemplateInfo = {
       version: '1.1',
-      signerList: [{ fieldList: ary }] // .ts fix
+      signerList: [{ fieldList: [] as object[] }] // .ts fix
     };
     for (let fieldIndex = 0; fieldIndex !== fieldList.length; fieldIndex += 1) {
       const fieldData = fieldList[fieldIndex];

@@ -184,10 +184,9 @@ export const createBulkSendTemplate = async (fieldList: any, pdfFileName: any, p
 
     // - check fieldList
     let sigFieldExist = false;
-    const ary: object[] = [];
     const internalTemplateInfo = {
       version: '1.1',
-      signerList: [{ fieldList: ary }] // .ts fix
+      signerList: [{ fieldList: [] as object[] }] // .ts fix
     };
     for (let fieldIndex = 0; fieldIndex !== fieldList.length; fieldIndex += 1) {
       const fieldData = fieldList[fieldIndex];
