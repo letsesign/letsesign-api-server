@@ -7,13 +7,15 @@ const {
   encryptTaskConfig,
   encryptTemplateData,
   encryptBindingData,
-  generateAccessKey
-} = require('./encryptor');
+  generateAccessKey,
+  decryptData
+} = require('./cryptor');
 const {
   checkSendAPIParams,
   checkSendWithTemplateAPIParams,
   checkBulkSendAPIParams,
   checkBulkSendWithTemplateAPIParams,
+  checkGetStatusAPIParams,
   checkParsedTemplate,
   checkPdfFileData,
   checkSignerPhoneNum,
@@ -115,17 +117,15 @@ const internalSubmitTask = async (
     }
 
     // 1. generate hash
-    const taskConfigHash = await sha256(JSON.stringify(internalTaskConfig));
-    const templateInfoHash = await sha256(JSON.stringify(internalTemplateInfo));
-    const templateDataHash = await sha256(internalTemplateData);
-    const bindingDataHash = await sha256(
-      JSON.stringify({ inOrder, taskConfigHash, templateInfoHash, templateDataHash })
-    );
+    const taskConfigHash = sha256(JSON.stringify(internalTaskConfig));
+    const templateInfoHash = sha256(JSON.stringify(internalTemplateInfo));
+    const templateDataHash = sha256(internalTemplateData);
+    const bindingDataHash = sha256(JSON.stringify({ inOrder, taskConfigHash, templateInfoHash, templateDataHash }));
 
     // 2. encrypt task config
     let encryptedTaskConfig = null;
     try {
-      encryptedTaskConfig = await encryptTaskConfig(internalTaskConfig, kmsPublicKey);
+      encryptedTaskConfig = encryptTaskConfig(internalTaskConfig, kmsPublicKey);
     } catch (err) {
       console.error(err);
       resp.httpCode = 409;
@@ -136,7 +136,7 @@ const internalSubmitTask = async (
     // 3. encrypt template data
     let encryptedTemplateData = null;
     try {
-      encryptedTemplateData = await encryptTemplateData(internalTemplateData, kmsPublicKey);
+      encryptedTemplateData = encryptTemplateData(internalTemplateData, kmsPublicKey);
     } catch (err) {
       console.error(err);
       resp.httpCode = 409;
@@ -145,10 +145,10 @@ const internalSubmitTask = async (
     }
 
     // 4. encrypt binding data
-    const taskAccessKey = await generateAccessKey(bearerSecret, bindingDataHash);
+    const taskAccessKey = generateAccessKey(bearerSecret, bindingDataHash);
     let encryptedBindingData = null;
     try {
-      encryptedBindingData = await encryptBindingData(
+      encryptedBindingData = encryptBindingData(
         inOrder,
         taskConfigHash,
         templateInfoHash,
@@ -216,6 +216,36 @@ const getConfigApi = async (apiKey: any) => {
 
   try {
     const res = await axios.get(`https://${apiSvrUrl}/${apiVer}/api/get-config`, { headers });
+
+    return {
+      httpCode: res.status,
+      jsonBody: res.data
+    };
+  } catch (err: any) {
+    let errorMsg = '';
+    if (err.response.headers['content-type'] === 'application/json') {
+      if ('errorMsg' in err.response.data) errorMsg = err.response.data.errorMsg;
+      else errorMsg = `Failed to call server API: ${JSON.stringify(err.response.data)}`;
+    } else errorMsg = err.response.data;
+
+    return {
+      httpCode: err.response.status,
+      errorMsg
+    };
+  }
+};
+
+const getStatusApi = async (apiKey: any, taskID: string) => {
+  const headers = {
+    Accept: 'application/json',
+    Authorization: `Basic ${apiKey}`
+  };
+  const params = {
+    taskID
+  };
+
+  try {
+    const res = await axios.get(`https://${apiSvrUrl}/${apiVer}/api/get-status`, { headers, params });
 
     return {
       httpCode: res.status,
@@ -1055,6 +1085,88 @@ export const submitBulkTaskWithTemplate = async (
       }
       resp.response = { taskList };
       resp.httpCode = 200;
+    }
+  } catch (err) {
+    console.error(err);
+    resp.httpCode = 500;
+    resp.errorMsg = 'Internal error';
+  }
+
+  return resp;
+};
+
+export const getTaskStatus = async (apiKey: any, taskID: string) => {
+  const resp = {
+    httpCode: 500,
+    errorMsg: 'Undefined error',
+    response: {}
+  };
+
+  try {
+    const checkParamsResult = checkGetStatusAPIParams(taskID);
+    if (!checkParamsResult.valid) {
+      resp.httpCode = 400;
+      // eslint-disable-next-line prettier/prettier
+      resp.errorMsg = `Invalid parameter: ${checkParamsResult.errors[0].path.join('.')} ${checkParamsResult.errors[0].message}`;
+      return resp;
+    }
+
+    const getStatusRes = await getStatusApi(apiKey, taskID);
+
+    resp.httpCode = getStatusRes.httpCode;
+    if (getStatusRes.httpCode === 200) {
+      if ('normalResponse' in getStatusRes.jsonBody.status) {
+        const { awsAccessKeyID, awsSecretAccessKey } = process.env;
+        const { encryptedData, encryptedDataKey, dataIV } = getStatusRes.jsonBody.encryptedTaskConfig;
+
+        let taskConfig = null;
+        try {
+          taskConfig = JSON.parse(
+            (await decryptData(awsAccessKeyID, awsSecretAccessKey, encryptedData, encryptedDataKey, dataIV)).toString()
+          ).taskConfig;
+        } catch (err) {
+          console.error(err);
+          resp.httpCode = 409;
+          resp.errorMsg = `Failed to decrypt task config`;
+          return resp;
+        }
+
+        const signerList = [];
+        for (let signerIndex = 0; signerIndex !== taskConfig.signerInfoList.length; signerIndex += 1) {
+          const signer = {
+            name: taskConfig.signerInfoList[signerIndex].name,
+            emailAddr: taskConfig.signerInfoList[signerIndex].emailAddr,
+            ...(taskConfig.signerInfoList[signerIndex].phoneNumber && {
+              phoneNumber: taskConfig.signerInfoList[signerIndex].phoneNumber
+            }),
+            ipAddress: getStatusRes.jsonBody.status.normalResponse.signerList[signerIndex].ipAddress,
+            signingTime: getStatusRes.jsonBody.status.normalResponse.signerList[signerIndex].signingTime
+          };
+
+          signerList.push(signer);
+        }
+
+        resp.response = {
+          status: {
+            taskID: getStatusRes.jsonBody.status.taskID,
+            taskTime: getStatusRes.jsonBody.status.taskTime,
+            normalResponse: {
+              isComplete: getStatusRes.jsonBody.status.normalResponse.isComplete,
+              signerList
+            }
+          }
+        };
+      } else {
+        resp.response = {
+          status: {
+            taskID: getStatusRes.jsonBody.status.taskID,
+            taskTime: getStatusRes.jsonBody.status.taskTime,
+            errorResponse: getStatusRes.jsonBody.status.errorResponse
+          }
+        };
+      }
+    } else {
+      resp.errorMsg = getStatusRes.errorMsg as string;
     }
   } catch (err) {
     console.error(err);

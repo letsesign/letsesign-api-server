@@ -237,6 +237,18 @@ export const checkCreateBulkSendTemplateAPIParams = (fieldList: any, pdfFileName
   return new Validator().validate(params, schema);
 };
 
+export const checkGetStatusAPIParams = (taksID: string) => {
+  const schema = {
+    type: 'object',
+    properties: {
+      taksID: { type: 'string', minLength: 1 }
+    },
+    required: ['taksID']
+  };
+  const params = { taksID };
+  return new Validator().validate(params, schema);
+};
+
 export const checkParsedTemplate = (parsedTemplate: any) => {
   const schema = {
     type: 'object',

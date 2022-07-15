@@ -5,7 +5,4 @@ curl -s https://raw.githubusercontent.com/letsesign/letsesign-enclave/main/tcb-i
 node ./dist/scripts/kms-update.js
 node ./dist/scripts/kms-download.js
 
-unset awsAccessKeyID
-unset awsSecretAccessKey
-
 pm2-runtime ./dist/index.js

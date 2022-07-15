@@ -3,7 +3,13 @@ import path from 'path';
 import express from 'express';
 import cors from 'cors';
 
-const { submitTask, submitBulkTask, submitTaskWithTemplate, submitBulkTaskWithTemplate } = require('./lib/caller');
+const {
+  submitTask,
+  submitBulkTask,
+  submitTaskWithTemplate,
+  submitBulkTaskWithTemplate,
+  getTaskStatus
+} = require('./lib/caller');
 const { semiVerify, autoVerify } = require('./lib/verifier');
 const { createSendTemplate, createBulkSendTemplate } = require('./lib/template-creator');
 
@@ -358,6 +364,26 @@ app.post('/verify_pdf_with_human/', async (req: any, res: any) => {
 
     if ('error' in result) res.status(400).send({ errorMsg: result.error });
     else res.status(200).send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ errorMsg: 'Backend Error' });
+  }
+});
+
+// get_status API route
+app.get('/get_status/', async (req: any, res: any) => {
+  try {
+    if (!apiKey) {
+      console.error('Invalid API Key setting');
+      res.status(409).send({ errorMsg: 'Invalid API Key setting' });
+      return;
+    }
+
+    const { taskID } = req.query;
+    const result = await getTaskStatus(apiKey, taskID);
+
+    if (result.httpCode === 200) res.status(200).send(result.response);
+    else res.status(result.httpCode).send({ errorMsg: result.errorMsg });
   } catch (err) {
     console.error(err);
     res.status(500).send({ errorMsg: 'Backend Error' });
