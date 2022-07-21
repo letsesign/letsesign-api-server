@@ -1255,7 +1255,7 @@ export const getTaskResult = async (taskID: string, imapConfig: any, taskPasswor
 
     if (attachments.length === 0) {
       resp.httpCode = 404;
-      resp.errorMsg = 'Result of the sent request is not exist';
+      resp.errorMsg = 'Cannot find the result of the task';
       return resp;
     }
 

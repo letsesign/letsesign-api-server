@@ -199,7 +199,7 @@ export const setupKey = async (awsAccessKeyID: any, awsSecretAccessKey: any) => 
   let kmsPubKey = null;
   let kmsKeyArn = await findDefaultKey(kmsClient);
 
-  // crate KMS key if default key is not exist
+  // create KMS key if default key does not exist
   if (kmsKeyArn === null) {
     const newKmsKey = await createKMSKey(kmsClient);
 
