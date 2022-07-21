@@ -17,11 +17,12 @@ const getTcbInfo = async () => {
 };
 
 const generateKMSPolicy = async (keyArn: string) => {
+  const maxVersionCnt = 6;
   const validateRet = new Validator().validate(keyArn, { type: 'string', pattern: '^arn:aws:kms:us-east-1:' });
   const getMostRecentVersions = (versionList: any[]) => {
-    if (versionList.length > 2) {
+    if (versionList.length > maxVersionCnt) {
       const orderedVersionList = versionList.sort((a, b) => a.issueTime - b.issueTime);
-      return [orderedVersionList[orderedVersionList.length - 2], orderedVersionList[orderedVersionList.length - 1]];
+      return orderedVersionList.slice(-Math.abs(maxVersionCnt));
     }
 
     return versionList;
