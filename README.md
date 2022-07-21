@@ -54,4 +54,12 @@ Depending on your choice there are two ways to deploy Let's eSign API Server:
 
 ## How to make API calls
 
-Please check [**Let's eSign API Server API (v1.1)**](https://letsesign.github.io/docs/api/v1.1/) for the details.
+The API provided by Let's eSign API Server is well documented in OpenAPI format.
+
+Please check [**Let's eSign API Server API (v1.2)**](https://letsesign.github.io/docs/api/v1.2/) for the details.
+
+## How to develop in-house apps
+
+A reference design is provided to ease the task of developing your in-house apps based on Let's eSign API Server.
+
+Please check [**Example.com eSign App**](https://github.com/letsesign/example.com-esign-app) for the details.  
