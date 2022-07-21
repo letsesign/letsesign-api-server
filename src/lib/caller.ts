@@ -1,4 +1,8 @@
+const os = require('os');
+const fs = require('fs-extra');
+const path = require('path');
 const crypto = require('crypto');
+const { spawnSync } = require('child_process');
 const axios = require('axios');
 const pLimit = require('p-limit');
 const { renderPDF } = require('./renderer');
@@ -16,6 +20,7 @@ const {
   checkBulkSendAPIParams,
   checkBulkSendWithTemplateAPIParams,
   checkGetStatusAPIParams,
+  checkGetResultAPIParams,
   checkParsedTemplate,
   checkPdfFileData,
   checkSignerPhoneNum,
@@ -23,6 +28,7 @@ const {
   checkerErrorCode
 } = require('./params-checker');
 const { parseTemplate } = require('./template-creator');
+const { searchTaskResult } = require('./imap-util');
 
 const apiSvrUrl = 'api.letsesign.net';
 const apiVer = '1909';
@@ -263,6 +269,52 @@ const getStatusApi = async (apiKey: any, taskID: string) => {
       errorMsg
     };
   }
+};
+
+const extractTaskResultFromZip = (zipB64: string, taskPassword: string) => {
+  const tmpFolderPath = fs.mkdtempSync(path.join(os.tmpdir(), 'letsesign-'));
+  const zipFilePath = path.join(tmpFolderPath, 'result.zip');
+  const decompressionFolderPath = path.join(tmpFolderPath, 'decompression');
+  let taskResult = null;
+
+  try {
+    // write zip file
+    fs.writeFileSync(zipFilePath, Buffer.from(zipB64, 'base64'));
+
+    // decompress zip file
+    const spawnRet = spawnSync('7za', ['e', zipFilePath, `-o${decompressionFolderPath}`, `-p${taskPassword}`]);
+
+    if (spawnRet.status !== 0) throw new Error(spawnRet.stderr.toString());
+
+    // get file list after decompress
+    const readDirRet = fs.readdirSync(decompressionFolderPath);
+
+    // find .pdf and .spf file
+    let pdfFileName = '';
+    let spfFileName = '';
+
+    for (let fileIndex = 0; fileIndex !== readDirRet.length; fileIndex += 1) {
+      if (readDirRet[fileIndex].endsWith('.spf')) {
+        spfFileName = readDirRet[fileIndex];
+        break;
+      }
+    }
+    if (spfFileName.length === 0) throw new Error('Missing SPF file in ZIP file');
+
+    pdfFileName = spfFileName.replace('.spf', '.pdf');
+    if (!readDirRet.includes(pdfFileName)) throw new Error('Missing PDF file in ZIP file');
+
+    taskResult = {
+      pdfBufferB64: fs.readFileSync(path.join(decompressionFolderPath, pdfFileName)).toString('base64'),
+      spfBufferB64: fs.readFileSync(path.join(decompressionFolderPath, spfFileName)).toString('base64')
+    };
+  } catch (err) {
+    console.log(err);
+  }
+
+  fs.removeSync(tmpFolderPath);
+
+  return taskResult;
 };
 
 export const submitTask = async (
@@ -1172,6 +1224,58 @@ export const getTaskStatus = async (apiKey: any, taskID: string) => {
     console.error(err);
     resp.httpCode = 500;
     resp.errorMsg = 'Internal error';
+  }
+
+  return resp;
+};
+
+export const getTaskResult = async (taskID: string, imapConfig: any, taskPassword = '') => {
+  const resp = {
+    httpCode: 500,
+    errorMsg: 'Undefined error',
+    response: {}
+  };
+
+  try {
+    const checkParamsResult = checkGetResultAPIParams(taskID, imapConfig, taskPassword);
+    if (!checkParamsResult.valid) {
+      resp.httpCode = 400;
+      // eslint-disable-next-line prettier/prettier
+      resp.errorMsg = `Invalid parameter: ${checkParamsResult.errors[0].path.join('.')} ${checkParamsResult.errors[0].message}`;
+      return resp;
+    }
+
+    const attachments = await searchTaskResult(
+      imapConfig.user,
+      imapConfig.password,
+      imapConfig.host,
+      imapConfig.port,
+      taskID
+    );
+
+    if (attachments.length === 0) {
+      resp.httpCode = 404;
+      resp.errorMsg = 'Result of the sent request is not exist';
+      return resp;
+    }
+
+    const zipContent = extractTaskResultFromZip(attachments[0], taskPassword);
+
+    if (zipContent === null) {
+      resp.httpCode = 400;
+      resp.errorMsg = 'Unable to decompress the result';
+      return resp;
+    }
+
+    resp.httpCode = 200;
+    resp.response = {
+      pdfBufferB64: zipContent.pdfBufferB64,
+      spfBufferB64: zipContent.spfBufferB64
+    };
+  } catch (err: any) {
+    resp.httpCode = 400;
+    resp.errorMsg = `${err.message}`;
+    return resp;
   }
 
   return resp;

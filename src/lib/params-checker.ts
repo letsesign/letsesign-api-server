@@ -237,15 +237,38 @@ export const checkCreateBulkSendTemplateAPIParams = (fieldList: any, pdfFileName
   return new Validator().validate(params, schema);
 };
 
-export const checkGetStatusAPIParams = (taksID: string) => {
+export const checkGetStatusAPIParams = (taskID: string) => {
   const schema = {
     type: 'object',
     properties: {
-      taksID: { type: 'string', minLength: 1 }
+      taskID: { type: 'string', minLength: 20 }
     },
-    required: ['taksID']
+    required: ['taskID']
   };
-  const params = { taksID };
+  const params = { taskID };
+  return new Validator().validate(params, schema);
+};
+
+export const checkGetResultAPIParams = (taskID: string, imapConfig: any, taskPassword: string) => {
+  const schema = {
+    type: 'object',
+    properties: {
+      taskID: { type: 'string', minLength: 20 },
+      imapConfig: {
+        type: 'object',
+        properties: {
+          user: { type: 'string', minLength: 1 },
+          password: { type: 'string', minLength: 1 },
+          host: { type: 'string', minLength: 1 },
+          port: { type: 'number' }
+        },
+        required: ['user', 'password', 'host', 'port']
+      },
+      taskPassword: { type: 'string' }
+    },
+    required: ['taskID', 'imapConfig', 'taskPassword']
+  };
+  const params = { taskID, imapConfig, taskPassword };
   return new Validator().validate(params, schema);
 };
 

@@ -8,7 +8,8 @@ const {
   submitBulkTask,
   submitTaskWithTemplate,
   submitBulkTaskWithTemplate,
-  getTaskStatus
+  getTaskStatus,
+  getTaskResult
 } = require('./lib/caller');
 const { semiVerify, autoVerify } = require('./lib/verifier');
 const { createSendTemplate, createBulkSendTemplate } = require('./lib/template-creator');
@@ -381,6 +382,23 @@ app.get('/get_status/', async (req: any, res: any) => {
 
     const { taskID } = req.query;
     const result = await getTaskStatus(apiKey, taskID);
+
+    if (result.httpCode === 200) res.status(200).send(result.response);
+    else res.status(result.httpCode).send({ errorMsg: result.errorMsg });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ errorMsg: 'Backend Error' });
+  }
+});
+
+// get_result API route
+app.post('/get_result/', async (req: any, res: any) => {
+  try {
+    const { taskID, imapConfig, taskPassword } = req.body;
+    let result = null;
+
+    if (taskPassword) result = await getTaskResult(taskID, imapConfig, taskPassword);
+    else result = await getTaskResult(taskID, imapConfig);
 
     if (result.httpCode === 200) res.status(200).send(result.response);
     else res.status(result.httpCode).send({ errorMsg: result.errorMsg });
