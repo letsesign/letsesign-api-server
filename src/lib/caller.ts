@@ -466,7 +466,7 @@ export const submitTask = async (
 
     if (isPreview) {
       try {
-        const preViewPdf = await renderPDF(internalTaskConfig, internalTemplateInfo, pdfFileDataBuffer);
+        const preViewPdf = await renderPDF(internalTaskConfig, internalTemplateInfo, pdfFileDataBuffer, true);
 
         resp.httpCode = 200;
         resp.response = { pdfPreviewB64: preViewPdf.toString('base64') };
@@ -641,7 +641,12 @@ export const submitTaskWithTemplate = async (
 
     if (isPreview) {
       try {
-        const preViewPdf = await renderPDF(internalTaskConfig, internalTemplateInfo, parsedTemplate.pdfFileDataBuffer);
+        const preViewPdf = await renderPDF(
+          internalTaskConfig,
+          internalTemplateInfo,
+          parsedTemplate.pdfFileDataBuffer,
+          true
+        );
 
         resp.httpCode = 200;
         resp.response = { pdfPreviewB64: preViewPdf.toString('base64') };
@@ -819,7 +824,8 @@ export const submitBulkTask = async (
             nonce: crypto.randomBytes(32).toString('hex')
           },
           internalTemplateInfo,
-          pdfFileDataBuffer
+          pdfFileDataBuffer,
+          true
         );
 
         resp.httpCode = 200;
@@ -1062,7 +1068,8 @@ export const submitBulkTaskWithTemplate = async (
             nonce: crypto.randomBytes(32).toString('hex')
           },
           internalTemplateInfo,
-          parsedTemplate.pdfFileDataBuffer
+          parsedTemplate.pdfFileDataBuffer,
+          true
         );
 
         resp.httpCode = 200;

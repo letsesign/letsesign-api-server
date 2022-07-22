@@ -4,6 +4,8 @@ const fontkit = require('@pdf-lib/fontkit');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 
 const FIELD_TYPE = {
+  SIGNATURE: 0,
+  DATE: 1,
   NAME: 2,
   EMAIL: 3,
   PHONE: 4
@@ -27,6 +29,37 @@ const checkPDFBoundary = (pageWidth: number, pageHeight: number, xPos: number, y
   if (yPos + height > pageHeight) throw new Error('height of field is out of range');
 };
 
+const drawTextFieldWithBar = (
+  pageObj: any,
+  fontObj: any,
+  fontAdjustmentFactor: any,
+  pageHeight: number,
+  xPos: number,
+  yPos: number,
+  height: number,
+  text: any,
+  weight: number
+) => {
+  const textFontSize = fontObj.sizeAtHeight(height * weight);
+  const barWidth = 6;
+  const textOffset = 6;
+
+  pageObj.drawLine({
+    start: { x: xPos + barWidth / 2, y: pageHeight - (yPos + height) },
+    end: { x: xPos + barWidth / 2, y: pageHeight - yPos },
+    thickness: 6,
+    color: rgb(0.203, 0.596, 0.858)
+  });
+
+  pageObj.drawText(text, {
+    x: xPos + barWidth / 2 + textOffset,
+    y: pageHeight - (yPos + (height * weight + (height * (1 - weight)) / 2 - 0.05)),
+    size: textFontSize,
+    font: fontObj,
+    color: rgb(0.203, 0.596, 0.858)
+  });
+};
+
 const drawTextField = (
   pageObj: any,
   fontObj: any,
@@ -48,7 +81,7 @@ const drawTextField = (
   });
 };
 
-export const renderPDF = async (taskConfig: any, templateInfo: any, templateData: any) => {
+export const renderPDF = async (taskConfig: any, templateInfo: any, templateData: any, isPreview = false) => {
   const pdfDoc = await PDFDocument.load(templateData.toString('base64'));
   const pages = pdfDoc.getPages();
   const fieldListByPage: { [key: string]: any } = {}; // .ts fix
@@ -88,6 +121,7 @@ export const renderPDF = async (taskConfig: any, templateInfo: any, templateData
 
       if (taskConfig.signerInfoList[signerIndex]) {
         fieldListByPage[`${field.pageNo}`].push({
+          signerIndex: `00${signerIndex + 1}`.slice(-2),
           name: taskConfig.signerInfoList[signerIndex].name,
           emailAddr: taskConfig.signerInfoList[signerIndex].emailAddr,
           ...(taskConfig.signerInfoList[signerIndex].phoneNumber && {
@@ -111,8 +145,31 @@ export const renderPDF = async (taskConfig: any, templateInfo: any, templateData
       const field = fieldListByPage[pageNo][fieldIndex];
 
       checkPDFBoundary(width, height, field.x, field.y, field.height);
-
-      if (field.type === FIELD_TYPE.NAME) {
+      if (field.type === FIELD_TYPE.SIGNATURE && isPreview) {
+        drawTextFieldWithBar(
+          pageObj,
+          await getFontObjFn(FONT_TYPE.TimesRoman),
+          FONT_FACTOR.TimesRoman,
+          height,
+          field.x,
+          field.y,
+          field.height,
+          `Signature (${field.signerIndex})`,
+          0.3
+        );
+      } else if (field.type === FIELD_TYPE.DATE && isPreview) {
+        drawTextFieldWithBar(
+          pageObj,
+          await getFontObjFn(FONT_TYPE.TimesRoman),
+          FONT_FACTOR.TimesRoman,
+          height,
+          field.x,
+          field.y,
+          field.height,
+          `Date (${field.signerIndex})`,
+          0.6
+        );
+      } else if (field.type === FIELD_TYPE.NAME) {
         const timesFont = await getFontObjFn(FONT_TYPE.TimesRoman); // .ts fix
         let passTimesCheck = true;
         const nameCharacterSet = [...field.name];
